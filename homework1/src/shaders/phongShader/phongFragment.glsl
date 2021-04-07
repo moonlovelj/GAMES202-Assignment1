@@ -15,10 +15,11 @@ varying highp vec3 vFragPos;
 varying highp vec3 vNormal;
 
 // Shadow map related variables
-#define NUM_SAMPLES 20
+#define NUM_SAMPLES 64
 #define BLOCKER_SEARCH_NUM_SAMPLES NUM_SAMPLES
 #define PCF_NUM_SAMPLES NUM_SAMPLES
 #define NUM_RINGS 10
+#define SHADOW_MAP_RESOLUTION 2048
 
 #define EPS 1e-3
 #define PI 3.141592653589793
@@ -87,8 +88,25 @@ float findBlocker( sampler2D shadowMap,  vec2 uv, float zReceiver ) {
 	return 1.0;
 }
 
-float PCF(sampler2D shadowMap, vec4 coords) {
-  return 1.0;
+float PCF(sampler2D shadowMap, vec4 coords, float fliterSize) {
+  vec3 shadowMapTexCoord = coords.xyz*0.5+0.5;
+  //uniformDiskSamples(coords.xy);
+  poissonDiskSamples(coords.xy);
+
+  float visibility = 0.0;
+  for( int i = 0; i < PCF_NUM_SAMPLES; i ++ ) {
+    float shadowDepth = unpack(texture2D(shadowMap, poissonDisk[i]*fliterSize/float(SHADOW_MAP_RESOLUTION)+shadowMapTexCoord.xy));
+    if (shadowDepth < EPS) shadowDepth = 1.0;
+    if (shadowMapTexCoord.z < shadowDepth + EPS){
+      visibility += 1.0;
+    }else{
+      visibility += 0.2;
+    }
+  }
+
+  visibility/=float(PCF_NUM_SAMPLES);
+
+  return visibility;
 }
 
 float PCSS(sampler2D shadowMap, vec4 coords){
@@ -139,8 +157,8 @@ vec3 blinnPhong() {
 void main(void) {
 
   float visibility;
-  visibility = useShadowMap(uShadowMap, vec4(vPositionFromLight.xyz/vPositionFromLight.w, 1.0));
-  //visibility = PCF(uShadowMap, vec4(shadowCoord, 1.0));
+  //visibility = useShadowMap(uShadowMap, vec4(vPositionFromLight.xyz/vPositionFromLight.w, 1.0));
+  visibility = PCF(uShadowMap, vec4(vPositionFromLight.xyz/vPositionFromLight.w, 1.0), 8.0);
   //visibility = PCSS(uShadowMap, vec4(shadowCoord, 1.0));
 
   vec3 phongColor = blinnPhong();
