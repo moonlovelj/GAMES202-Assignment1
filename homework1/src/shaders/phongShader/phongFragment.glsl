@@ -118,8 +118,6 @@ float PCF(sampler2D shadowMap, vec4 coords, float fliterSize) {
     if (shadowDepth < EPS) shadowDepth = 1.0;
     if (shadowMapTexCoord.z < shadowDepth + EPS){
       visibility += 1.0;
-    }else{
-      visibility += 0.2;
     }
   }
 
@@ -150,8 +148,6 @@ float PCSS(sampler2D shadowMap, vec4 coords, float filterSearchSize){
     if (shadowDepth < EPS) shadowDepth = 1.0;
     if (shadowMapTexCoord.z < shadowDepth + EPS){
       visibility += 1.0;
-    }else{
-      visibility += 0.2;
     }
   }
 
@@ -167,7 +163,7 @@ float useShadowMap(sampler2D shadowMap, vec4 shadowCoord){
   if (shadowTexCoord.z < shadowDepth+EPS){
     return 1.0;
   }
-  return 0.2;
+  return 0.0;
 }
 
 vec3 blinnPhong() {
