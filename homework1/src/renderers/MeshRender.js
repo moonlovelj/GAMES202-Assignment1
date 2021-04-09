@@ -169,6 +169,15 @@ class MeshRender {
 				gl.bindTexture(gl.TEXTURE_2D, this.material.uniforms[k].value.texture);
 				gl.uniform1i(this.shader.program.uniforms[k], textureNum);
 				textureNum += 1;
+			}else if (this.material.uniforms[k].type == 'texturev') {
+				let textureIds = [];
+				this.material.uniforms[k].value.forEach(element => {
+					gl.activeTexture(gl.TEXTURE0 + textureNum);
+					gl.bindTexture(gl.TEXTURE_2D, element.texture);
+					textureIds.push(textureNum);
+					textureNum += 1;
+				});
+				gl.uniform1iv(this.shader.program.uniforms[k], textureIds);
 			}
 		}
 	}

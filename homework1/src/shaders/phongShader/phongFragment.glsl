@@ -2,20 +2,25 @@
 precision mediump float;
 #endif
 
+#define MAX_LIGHT_NUM 10
+
 // Phong related variables
 uniform sampler2D uSampler;
 uniform vec3 uKd;
 uniform vec3 uKs;
 uniform vec3 uLightPos;
+uniform vec3 uLightPosArray[MAX_LIGHT_NUM];
 uniform vec3 uCameraPos;
 uniform vec3 uLightIntensity;
+uniform vec3 uLightIntensityArray[MAX_LIGHT_NUM];
+uniform highp int uActiveLightNum;
 
 varying highp vec2 vTextureCoord;
 varying highp vec3 vFragPos;
 varying highp vec3 vNormal;
 
 // Shadow map related variables
-#define NUM_SAMPLES 64
+#define NUM_SAMPLES 32
 #define BLOCKER_SEARCH_NUM_SAMPLES NUM_SAMPLES
 #define PCF_NUM_SAMPLES NUM_SAMPLES
 #define NUM_RINGS 10
@@ -26,9 +31,11 @@ varying highp vec3 vNormal;
 #define PI 3.141592653589793
 #define PI2 6.283185307179586
 
-uniform sampler2D uShadowMap;
+//uniform sampler2D uShadowMap;
+uniform sampler2D uShadowMapArray[MAX_LIGHT_NUM];
 
 varying vec4 vPositionFromLight;
+varying vec4 vPositionFromLightArray[MAX_LIGHT_NUM];
 
 highp float rand_1to1(highp float x ) { 
   // -1 -1
@@ -166,17 +173,17 @@ float useShadowMap(sampler2D shadowMap, vec4 shadowCoord){
   return 0.0;
 }
 
-vec3 blinnPhong() {
+vec3 blinnPhong(vec3 lightPos, vec3 lightIntensity) {
   vec3 color = texture2D(uSampler, vTextureCoord).rgb;
   color = pow(color, vec3(2.2));
 
   vec3 ambient = 0.05 * color;
 
-  vec3 lightDir = normalize(uLightPos);
+  vec3 lightDir = normalize(lightPos);
   vec3 normal = normalize(vNormal);
   float diff = max(dot(lightDir, normal), 0.0);
   vec3 light_atten_coff =
-      uLightIntensity / pow(length(uLightPos - vFragPos), 2.0);
+      lightIntensity / pow(length(lightPos - vFragPos), 2.0);
   vec3 diffuse = diff * light_atten_coff * color;
 
   vec3 viewDir = normalize(uCameraPos - vFragPos);
@@ -191,14 +198,21 @@ vec3 blinnPhong() {
 
 void main(void) {
 
-  float visibility;
+  float visibility = 0.0;
   //visibility = useShadowMap(uShadowMap, vec4(vPositionFromLight.xyz/vPositionFromLight.w, 1.0));
   //visibility = PCF(uShadowMap, vec4(vPositionFromLight.xyz/vPositionFromLight.w, 1.0), 8.0);
-  visibility = PCSS(uShadowMap, vec4(vPositionFromLight.xyz/vPositionFromLight.w, 1.0), 8.0);
+  //visibility = PCSS(uShadowMap, vec4(vPositionFromLightArray[0].xyz/vPositionFromLightArray[0].w, 1.0), 4.0);
 
-  vec3 phongColor = blinnPhong();
+  vec3 phongColor = vec3(0.0, 0.0, 0.0);
+  for(int i=0; i < MAX_LIGHT_NUM; i++){
+    if (i >= uActiveLightNum) break;
+    phongColor += blinnPhong(uLightPosArray[i], uLightIntensityArray[i]);
+    visibility += PCSS(uShadowMapArray[i], vec4(vPositionFromLightArray[i].xyz/vPositionFromLightArray[i].w, 1.0), 4.0);
+  }
+  
+  visibility /= float(uActiveLightNum);
 
   gl_FragColor = vec4(phongColor * visibility, 1.0);
   //gl_FragColor = vec4(phongColor, 1.0);
-  //gl_FragColor = vec4(visibility,visibility,visibility, 1.0);
+  //gl_FragColor = vec4(float(uActiveLightNum),float(uActiveLightNum),float(uActiveLightNum), 1.0);
 }
