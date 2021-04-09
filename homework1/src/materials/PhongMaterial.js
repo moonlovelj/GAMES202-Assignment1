@@ -2,13 +2,19 @@ class PhongMaterial extends Material {
 
     constructor(color, specular, lights, translate, scale, vertexShader, fragmentShader) {
 
-        let lightMVP = [];
+        let lightMVP = new glMatrix.ARRAY_TYPE(16*lights.length);
+        let lightMVPIndex=0;
         let lightIntensity = [];
         let lightPos = [];
         let lightNum = lights.length;
         let shadowMap = [];
         lights.forEach(element => {
-            lightMVP = lightMVP.concat(element.entity.CalcLightMVP(translate, scale));
+            let lMvp = element.entity.CalcLightMVP(translate, scale);
+            for(let i=0; i < 16; i++){
+                lightMVP[lightMVPIndex]=lMvp[i];
+                ++lightMVPIndex;
+            }
+
             lightIntensity = lightIntensity.concat(element.entity.mat.GetIntensity());
             lightPos = lightPos.concat(element.entity.lightPos);
             shadowMap = shadowMap.concat(element.entity.fbo);
