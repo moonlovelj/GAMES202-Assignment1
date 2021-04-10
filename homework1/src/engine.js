@@ -49,8 +49,8 @@ function GAMES202Main() {
 	let lightUp = [0, 1, 0]
 	const directionLight = new DirectionalLight(1000, [1, 1, 1], lightPos, focalPoint, lightUp, true, renderer.gl);
 	renderer.addLight(directionLight);
-	renderer.addLight(new DirectionalLight(1000, [1, 1, 1], [60, 80, 10], focalPoint, lightUp, true, renderer.gl));
-	renderer.addLight(new DirectionalLight(1000, [1, 1, 1], [-60, 80, 20], focalPoint, lightUp, true, renderer.gl));
+	//renderer.addLight(new DirectionalLight(3000, [1, 1, 1], [60, 80, 10], focalPoint, lightUp, true, renderer.gl));
+	renderer.addLight(new DirectionalLight(500, [1, 1, 1], [50, 80, 20], focalPoint, lightUp, true, renderer.gl));
 
 	// Add shapes
 	
